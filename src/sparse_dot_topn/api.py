@@ -2,14 +2,18 @@
 from __future__ import annotations
 
 import warnings
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 import numpy as np
 import psutil
 from scipy.sparse import coo_matrix, csc_matrix, csr_matrix
 
 from sparse_dot_topn.lib import _sparse_dot_topn_core as _core
-from sparse_dot_topn.types import assert_idx_dtype, assert_supported_dtype, ensure_compatible_dtype
+from sparse_dot_topn.types import (
+    assert_idx_dtype,
+    assert_supported_dtype,
+    ensure_compatible_dtype,
+)
 
 if TYPE_CHECKING:
     from numpy.types import DTypeLike
@@ -19,11 +23,23 @@ __all__ = ["sp_matmul_topn", "awesome_cossim_topn"]
 
 _N_CORES = psutil.cpu_count(logical=False) - 1
 
-_SUPPORTED_DTYPES = {np.dtype("int32"), np.dtype("int64"), np.dtype("float32"), np.dtype("float64")}
+_SUPPORTED_DTYPES = {
+    np.dtype("int32"),
+    np.dtype("int64"),
+    np.dtype("float32"),
+    np.dtype("float64"),
+}
 
 
 def awesome_cossim_topn(
-    A, B, ntop, lower_bound=0, use_threads=False, n_jobs=1, return_best_ntop=None, test_nnz_max=None
+    A,
+    B,
+    ntop,
+    lower_bound=0,
+    use_threads=False,
+    n_jobs=1,
+    return_best_ntop=None,
+    test_nnz_max=None,
 ):
     """This function will be removed and replaced with `sp_matmul_topn`.
 
@@ -67,7 +83,9 @@ def awesome_cossim_topn(
         raise DeprecationWarning(msg)
     warnings.warn(msg, DeprecationWarning, stacklevel=2)
     n_threads = n_jobs if use_threads is True else None
-    C = sp_matmul_topn(A=A, B=B, top_n=ntop, threshold=lower_bound, sort=True, n_threads=n_threads)
+    C = sp_matmul_topn(
+        A=A, B=B, top_n=ntop, threshold=lower_bound, sort=True, n_threads=n_threads
+    )
     if return_best_ntop:
         return C, np.diff(C.indptr).max()
     return C
@@ -121,7 +139,11 @@ def sp_matmul_topn(
     density: float = density or 1.0
     idx_dtype = assert_idx_dtype(idx_dtype)
 
-    if isinstance(A, csc_matrix) and isinstance(B, csc_matrix) and A.shape[0] == B.shape[1]:
+    if (
+        isinstance(A, csc_matrix)
+        and isinstance(B, csc_matrix)
+        and A.shape[0] == B.shape[1]
+    ):
         A = A.transpose()
         B = B.transpose()
     elif isinstance(A, (coo_matrix, csc_matrix)):
@@ -144,9 +166,7 @@ def sp_matmul_topn(
         B = B.transpose() if isinstance(B, csc_matrix) else B.transpose().tocsr(False)
         B_nrows, B_ncols = B.shape
     else:
-        msg = (
-            "Matrices `A` and `B` have incompatible shapes. `A.shape[1]` must be equal to `B.shape[0]` or `B.shape[1]`."
-        )
+        msg = "Matrices `A` and `B` have incompatible shapes. `A.shape[1]` must be equal to `B.shape[0]` or `B.shape[1]`."
         raise ValueError(msg)
 
     assert_supported_dtype(A)
@@ -158,7 +178,11 @@ def sp_matmul_topn(
 
     # handle threshold
     if np.issubdtype(A.data.dtype, np.integer):
-        threshold = int(np.rint(threshold)) if threshold is not None else np.iinfo(A.data.dtype).min
+        threshold = (
+            int(np.rint(threshold))
+            if threshold is not None
+            else np.iinfo(A.data.dtype).min
+        )
     else:
         threshold = threshold if threshold is not None else np.finfo(A.data.dtype).min
 
@@ -188,8 +212,84 @@ def sp_matmul_topn(
         if _core._has_openmp_support:
             kwargs["n_threads"] = n_threads
             kwargs.pop("density")
-            func = _core.sp_matmul_topn_mt if not sort else _core.sp_matmul_topn_sorted_mt
+            func = (
+                _core.sp_matmul_topn_mt if not sort else _core.sp_matmul_topn_sorted_mt
+            )
         else:
             msg = "sparse_dot_topn: extension was compiled without parallelisation (OpenMP) support, ignoring ``n_threads``"
             warnings.warn(msg, stacklevel=1)
     return csr_matrix(func(**kwargs), shape=(A_nrows, B_ncols))
+
+
+def sp_matzip_topn_sorted(
+    top_n: int,
+    nrowsA: int,
+    ncolsB: list,
+    C_mats: List[csr_matrix],
+) -> csr_matrix:
+    """Compute zip-matrix C = zip_i C_i = zip_i A * B_i = A * B whilst only storing the `top_n` elements.
+
+    Pre-calling this function, matrix B has been split row-wise into chunks B_i, and C_i = A * B_i have been calculated.
+    This function computes C = zip_i C_i, which is equivalent to A * B when only keeping the `top_n` elements.
+    It allows very large matrices to be split and multiplied with a limited memory footprint.
+
+    Args:
+        top_n: the number of results to retain
+        nrowsA: the number of rows in A, LHS of the multiplication.
+        ncolsB: a list with the number of columns in each B_i sub-matrix, RHS of the multiplication.
+        C_mats: a list with each C_i sub-matrix, with format csr_matrix.
+
+    Returns:
+        C: zipped result matrix
+    """
+    # triviality tests
+    assert top_n >= 1
+    assert nrowsA >= 1
+    assert len(ncolsB) >= 1
+    assert all(nB >= 1 for nB in ncolsB)
+    assert len(ncolsB) == len(C_mats)
+    assert all(nrowsA + 1 == len(C_mat.indptr) for C_mat in C_mats)
+
+    ncolsB_tot = sum(ncolsB)
+    nrowsZ_max = min(top_n * nrowsA, sum(C.size for C in C_mats))
+
+    Z_indptr = np.zeros(nrowsA + 1, dtype=C_mats[0].indptr.dtype)
+    Z_indices = np.zeros(nrowsZ_max, dtype=C_mats[0].indices.dtype)
+    Z_data = np.zeros(nrowsZ_max, dtype=C_mats[0].data.dtype)
+
+    # offset, used below, is cumulative sum of number of rows already processed
+    offset = [0] * len(ncolsB)
+    for mi in range(len(ncolsB) - 1):
+        for mj in range(mi, len(ncolsB) - 1):
+            offset[mj + 1] += ncolsB[mi]
+
+    n_set = 0
+    for i in range(nrowsA):
+        # collect all corresponding rows
+        d_zip = dict()
+        for mi, C_mat in enumerate(C_mats):
+            for j in range(C_mat.indptr[i], C_mat.indptr[i + 1]):
+                d_zip[offset[mi] + C_mat.indices[j]] = C_mat.data[j]
+
+        # sort by key in reverse order - this mimics the reverse insertion into maxheap,
+        # as in sp_matmul_topn function, which uses a linked list in reverse order.
+        d_zip = dict(sorted(d_zip.items(), reverse=True))
+        # then sort by value and apply topn selection
+        d_zip = {
+            k: v
+            for k, v in sorted(d_zip.items(), key=lambda item: item[1], reverse=True)
+        }
+        d_topn = {k: d_zip[k] for k in list(d_zip)[:top_n]}
+
+        # fill the zip-matrix
+        keys = list(d_topn.keys())
+        k = len(keys)
+        Z_indptr[i + 1] = n_set + k
+        for ki, key in enumerate(keys):
+            Z_indices[n_set + ki] = key
+            Z_data[n_set + ki] = d_topn[key]
+        n_set += k
+
+    # func = _core.sp_matzip_topn_sorted
+    # return csr_matrix(func(**kwargs), shape=(nrowsA, ncolsB_tot))
+    return csr_matrix((Z_data, Z_indices, Z_indptr), shape=(nrowsA, ncolsB_tot))
