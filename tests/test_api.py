@@ -3,7 +3,7 @@ from itertools import product
 import numpy as np
 import pytest
 from scipy import sparse
-from sparse_dot_topn import _has_openmp_support, sp_matmul_topn
+from sparse_dot_topn import _has_openmp_support, sp_matmul_topn, sp_matzip_topn_sorted
 
 from ._resources import _assert_array_equal, _assert_smat_equal, _get_topn_elements
 
@@ -163,3 +163,27 @@ def test_sp_matmul_topn_broadcasting(rng, kwargs):
     C_ref = A.dot(B.T) if T_b else A.dot(B)
     C = sp_matmul_topn(A, B, top_n=topn)
     _assert_smat_equal(C, C_ref)
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64, np.int32, np.int64])
+def test_sp_matzip_topn_sorted(rng, dtype):
+    # matching 100 names against 600 gt-names, where gt has been split into three parts
+    A = sparse.random(100, 2000, density=0.1, format="csr", dtype=dtype, random_state=rng)
+    B = sparse.random(600, 2000, density=0.1, format="csr", dtype=dtype, random_state=rng)
+
+    # reference
+    C_ref = sp_matmul_topn(A, B.T, top_n=10, threshold=0.01, sort=True)
+
+    # zipped C-matrix
+    Bs = [B[:100], B[100:300], B[300:]]
+    Cs = [sp_matmul_topn(A, Bi.T, top_n=10, threshold=0.01, sort=True) for Bi in Bs]
+    C_zip = sp_matzip_topn_sorted(top_n=10, nrowsA=100, ncolsB=[100, 200, 300], C_mats=Cs)
+
+    # comparison
+    _assert_array_equal(C_zip.indptr, C_ref.indptr)
+    _assert_array_equal(C_zip.data, C_ref.data)
+    # indices are not necessarily equal. For example in case of multiple equal scores close to the topn boundary,
+    # sp_matmul_topn and the zipped approach may pick different matches. In such cases for sp_matmul_topn
+    # the insertion order in the maxheap is leading, which is impossible to replicate in sp_matzip_topn_sorted,
+    # as the B matrices are have been split and get inserted in separate maxheap objects.
+    _assert_array_equal(C_zip.indices, C_ref.indices)
