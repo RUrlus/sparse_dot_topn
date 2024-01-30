@@ -16,6 +16,7 @@
  */
 #include <nanobind/nanobind.h>
 #include <sparse_dot_topn/eigen/sp_matmul.hpp>
+#include <sparse_dot_topn/eigen/sp_matmul_topn.hpp>
 #include <sparse_dot_topn/sp_matmul_bindings.hpp>
 #include <sparse_dot_topn/sp_matmul_topn_bindings.hpp>
 #include <sparse_dot_topn/zip_sp_matmul_topn_bindings.hpp>
@@ -29,6 +30,7 @@ NB_MODULE(_sparse_dot_topn_core, m) {
     bind_zip_sp_matmul_topn(m);
     eigen::bindings::bind_sp_matmul_csr_csr(m);
     eigen::bindings::bind_sp_matmul_csr_csc(m);
+    eigen::bindings::bind_sp_matmul_topn(m);
 #ifdef SDTN_OMP_ENABLED
     bind_sp_matmul_mt(m);
     bind_sp_matmul_topn_mt(m);
