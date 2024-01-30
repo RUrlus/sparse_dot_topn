@@ -7,6 +7,12 @@ find_package(
 # -- Nanobind
 find_package(nanobind CONFIG REQUIRED)
 
+# -- Eigen
+find_package(Eigen3 NO_MODULE)
+if(NOT TARGET Eigen3::Eigen)
+  include(GetEigen)
+  find_package(Eigen3 REQUIRED NO_MODULE)
+endif()
 
 # -- OpenMP
 if(NOT SDTN_DISABLE_OPENMP)
