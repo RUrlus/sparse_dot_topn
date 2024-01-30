@@ -11,7 +11,8 @@ find_package(nanobind CONFIG REQUIRED)
 find_package(Eigen3 NO_MODULE)
 if(NOT TARGET Eigen3::Eigen)
   include(GetEigen)
-  find_package(Eigen3 REQUIRED NO_MODULE)
+  set(Eigen3_DIR "${STDN_EIGEN_TARGET_DIR}/eigen/cmake")
+  find_package(Eigen3 NO_MODULE REQUIRED)
 endif()
 
 # -- OpenMP

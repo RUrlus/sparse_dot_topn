@@ -10,17 +10,25 @@ ENDIF ()
 
 set(STDN_EIGEN_TARGET_DIR ${PROJECT_SOURCE_DIR}/src/sparse_dot_topn_core/extern)
 
+message(STATUS "sdtn: collecting eigen v${SDTN_EIGEN_VERSION} at ${STDN_EIGEN_TARGET_DIR}")
+list(APPEND CMAKE_MESSAGE_INDENT "  ")
+
 FetchContent_Declare(
-    StdnEigen
+    Eigen
     GIT_REPOSITORY https://gitlab.com/libeigen/eigen
     GIT_TAG        ${SDTN_EIGEN_VERSION}
     SOURCE_DIR     ${STDN_EIGEN_TARGET_DIR}
+    GIT_SHALLOW TRUE
+    GIT_PROGRESS TRUE
+    EXCLUDE_FROM_ALL
 )
 
-FetchContent_GetProperties(StdnEigen)
+set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
+set(BUILD_TESTING OFF)
+set(EIGEN_BUILD_TESTING OFF)
+set(EIGEN_BUILD_PKGCONFIG OFF)
+set(EIGEN_BUILD_DOC OFF)
+FetchContent_MakeAvailable(Eigen)
 
-IF (NOT stdneigen_POPULATED)
-    message(STATUS "sdtn: collecting eigen v${SDTN_EIGEN_VERSION}")
-    FetchContent_Populate(StdnEigen)
-    set(EIGEN3_ROOT_DIR ${STDN_EIGEN_TARGET_DIR})
-ENDIF ()
+list(POP_BACK CMAKE_MESSAGE_INDENT)
+set(EIGEN3_ROOT_DIR "${STDN_EIGEN_TARGET_DIR}/eigen")
