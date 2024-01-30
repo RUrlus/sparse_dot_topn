@@ -14,29 +14,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#pragma once
+
+#include <nanobind/eigen/sparse.h>
 #include <nanobind/nanobind.h>
-#include <sparse_dot_topn/eigen/sp_matmul.hpp>
-#include <sparse_dot_topn/sp_matmul_bindings.hpp>
-#include <sparse_dot_topn/sp_matmul_topn_bindings.hpp>
-#include <sparse_dot_topn/zip_sp_matmul_topn_bindings.hpp>
+#include <nanobind/ndarray.h>
+#include <Eigen/SparseCore>
 
-namespace sdtn::bindings {
+#include <sparse_dot_topn/common.hpp>
+#include <sparse_dot_topn/eigen/common.hpp>
 
-NB_MODULE(_sparse_dot_topn_core, m) {
-    bind_sp_matmul(m);
-    bind_sp_matmul_topn(m);
-    bind_sp_matmul_topn_sorted(m);
-    bind_zip_sp_matmul_topn(m);
-    eigen::bindings::bind_sp_matmul_csr_csr(m);
-    eigen::bindings::bind_sp_matmul_csr_csc(m);
-#ifdef SDTN_OMP_ENABLED
-    bind_sp_matmul_mt(m);
-    bind_sp_matmul_topn_mt(m);
-    bind_sp_matmul_topn_sorted_mt(m);
-    m.attr("_has_openmp_support") = true;
-#else
-    m.attr("_has_openmp_support") = false;
-#endif  // MMU_HAS_OPENMP_SUPPORT
+namespace sdtn::eigen {
+
+namespace nb = nanobind;
+
+namespace core {}  // namespace core
+
+namespace api {
+
+template <typename eT, typename idxT, int Order = Eigen::RowMajor>
+SpMat<eT, idxT> sp_matmul(nb::handle& A_src, nb::handle& B_src) {
+    SpMapMat<eT, idxT> A = to_eigen<eT, idxT>(A_src);
+    SpMapMat<eT, idxT, Order> B = to_eigen<eT, idxT, Order>(B_src);
+    return A * B;
 }
 
-}  // namespace sdtn::bindings
+}  // namespace api
+
+namespace bindings {
+
+void bind_sp_matmul_csr_csr(nb::module_& m);
+void bind_sp_matmul_csr_csc(nb::module_& m);
+
+}  // namespace bindings
+}  // namespace sdtn::eigen
