@@ -75,6 +75,7 @@ if(OpenMP_CXX_FOUND)
     endif()
   endif()
 endif()
+target_link_libraries(_sparse_dot_topn_core PRIVATE Eigen3::Eigen)
 
 target_compile_definitions(_sparse_dot_topn_core PRIVATE VERSION_INFO=${SKBUILD_PROJECT_VERSION})
 
