@@ -31,6 +31,7 @@ NB_MODULE(_sparse_dot_topn_core, m) {
     eigen::bindings::bind_sp_matmul_csr_csr(m);
     eigen::bindings::bind_sp_matmul_csr_csc(m);
     eigen::bindings::bind_sp_matmul_topn_scalar(m);
+    eigen::bindings::bind_sp_matmul_topn_blocks(m);
 #ifdef SDTN_OMP_ENABLED
     bind_sp_matmul_mt(m);
     bind_sp_matmul_topn_mt(m);
