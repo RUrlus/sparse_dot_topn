@@ -92,4 +92,82 @@ void bind_sp_matmul_topn_scalar(nb::module_& m) {
     );
 }  // bind_sp_matmul_scalar
 
+void bind_sp_matmul_topn_blocks(nb::module_& m) {
+    m.def(
+        "eigen_sp_matmul_topn_blocks",
+        &api::sp_matmul_topn_blocks<double, int>,
+        "A"_a.noconvert(),
+        "B"_a.noconvert(),
+        "top_n"_a,
+        "block_size"_a,
+        nb::raw_doc("Compute sparse dot product and keep top n.\n"
+                    "\n"
+                    "Args:\n"
+                    "    A (scipy.sparse.csr_matrix): LHS of product\n"
+                    "    B (scipy.sparse.csr_matrix): RHS of product\n"
+                    "    top_n (int): the number of results to retain\n"
+                    "    block_size (int): the of columns per block\n"
+                    "\n"
+                    "Returns:\n"
+                    "    C (scipy.sparse.csr_matrix): the result of A.dot(B)\n"
+                    "\n")
+    );
+    m.def(
+        "eigen_sp_matmul_topn_blocks",
+        &api::sp_matmul_topn_blocks<float, int>,
+        "A"_a.noconvert(),
+        "B"_a.noconvert(),
+        "top_n"_a,
+        "block_size"_a
+    );
+    m.def(
+        "eigen_sp_matmul_topn_blocks",
+        &api::sp_matmul_topn_blocks<double, int64_t>,
+        "A"_a.noconvert(),
+        "B"_a.noconvert(),
+        "top_n"_a,
+        "block_size"_a
+    );
+    m.def(
+        "eigen_sp_matmul_topn_blocks",
+        &api::sp_matmul_topn_blocks<float, int64_t>,
+        "A"_a.noconvert(),
+        "B"_a.noconvert(),
+        "top_n"_a,
+        "block_size"_a
+    );
+    m.def(
+        "eigen_sp_matmul_topn_blocks",
+        &api::sp_matmul_topn_blocks<int64_t, int>,
+        "A"_a.noconvert(),
+        "B"_a.noconvert(),
+        "top_n"_a,
+        "block_size"_a
+    );
+    m.def(
+        "eigen_sp_matmul_topn_blocks",
+        &api::sp_matmul_topn_blocks<int, int>,
+        "A"_a.noconvert(),
+        "B"_a.noconvert(),
+        "top_n"_a,
+        "block_size"_a
+    );
+    m.def(
+        "eigen_sp_matmul_topn_blocks",
+        &api::sp_matmul_topn_blocks<int64_t, int64_t>,
+        "A"_a.noconvert(),
+        "B"_a.noconvert(),
+        "top_n"_a,
+        "block_size"_a
+    );
+    m.def(
+        "eigen_sp_matmul_topn_blocks",
+        &api::sp_matmul_topn_blocks<int, int64_t>,
+        "A"_a.noconvert(),
+        "B"_a.noconvert(),
+        "top_n"_a,
+        "block_size"_a
+    );
+}  // bind_sp_matmul_topn_blocks
+
 }  // namespace sdtn::eigen::bindings
