@@ -38,13 +38,15 @@ namespace core {}  // namespace core
 namespace api {
 
 template <typename eT, typename idxT>
-nb::tuple sp_matmul_topn(nb::handle& A_src, nb::handle& B_src, int top_n) {
+nb::tuple sp_matmul_topn_scalar(
+    nb::handle& A_src, nb::handle& B_src, const int top_n
+) {
     SpMapMat<eT, idxT> A = to_eigen<eT, idxT>(A_src);
     SpColMapMat<eT, idxT> B = to_eigen<eT, idxT, Eigen::ColMajor>(B_src);
 
     const idxT nrows = A.rows();
     const idxT ncols = B.cols();
-    idxT result_size = static_cast<idxT>(top_n * nrows);
+    const idxT result_size = static_cast<idxT>(top_n * nrows);
 
     std::vector<eT> C_data;
     C_data.reserve(result_size);
@@ -57,9 +59,8 @@ nb::tuple sp_matmul_topn(nb::handle& A_src, nb::handle& B_src, int top_n) {
     idxT nnz = 0;
     for (idxT i = 0; i < nrows; ++i) {
         eT min = max_heap.reset();
-        Eigen::SparseVector<eT, Eigen::RowMajor, idxT> row = A.row(i);
         for (idxT j = 0; j < B.cols(); ++j) {
-            eT val = row.dot(B.col(j));
+            eT val = A.row(i).dot(B.col(j));
             if (val > min) {
                 min = max_heap.push_pop(j, val);
             }

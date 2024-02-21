@@ -23,10 +23,10 @@ namespace nb = nanobind;
 
 using namespace nb::literals;
 
-void bind_sp_matmul_topn(nb::module_& m) {
+void bind_sp_matmul_topn_scalar(nb::module_& m) {
     m.def(
-        "eigen_sp_matmul_topn",
-        &api::sp_matmul_topn<double, int>,
+        "eigen_sp_matmul_topn_scalar",
+        &api::sp_matmul_topn_scalar<double, int>,
         "A"_a.noconvert(),
         "B"_a.noconvert(),
         "top_n"_a,
@@ -42,54 +42,54 @@ void bind_sp_matmul_topn(nb::module_& m) {
                     "\n")
     );
     m.def(
-        "eigen_sp_matmul_topn",
-        &api::sp_matmul_topn<float, int>,
+        "eigen_sp_matmul_topn_scalar",
+        &api::sp_matmul_topn_scalar<float, int>,
         "A"_a.noconvert(),
         "B"_a.noconvert(),
         "top_n"_a
     );
     m.def(
-        "eigen_sp_matmul_topn",
-        &api::sp_matmul_topn<double, int64_t>,
+        "eigen_sp_matmul_topn_scalar",
+        &api::sp_matmul_topn_scalar<double, int64_t>,
         "A"_a.noconvert(),
         "B"_a.noconvert(),
         "top_n"_a
     );
     m.def(
-        "eigen_sp_matmul_topn",
-        &api::sp_matmul_topn<float, int64_t>,
+        "eigen_sp_matmul_topn_scalar",
+        &api::sp_matmul_topn_scalar<float, int64_t>,
         "A"_a.noconvert(),
         "B"_a.noconvert(),
         "top_n"_a
     );
     m.def(
-        "eigen_sp_matmul_topn",
-        &api::sp_matmul_topn<int64_t, int>,
+        "eigen_sp_matmul_topn_scalar",
+        &api::sp_matmul_topn_scalar<int64_t, int>,
         "A"_a.noconvert(),
         "B"_a.noconvert(),
         "top_n"_a
     );
     m.def(
-        "eigen_sp_matmul_topn",
-        &api::sp_matmul_topn<int, int>,
+        "eigen_sp_matmul_topn_scalar",
+        &api::sp_matmul_topn_scalar<int, int>,
         "A"_a.noconvert(),
         "B"_a.noconvert(),
         "top_n"_a
     );
     m.def(
-        "eigen_sp_matmul_topn",
-        &api::sp_matmul_topn<int64_t, int64_t>,
+        "eigen_sp_matmul_topn_scalar",
+        &api::sp_matmul_topn_scalar<int64_t, int64_t>,
         "A"_a.noconvert(),
         "B"_a.noconvert(),
         "top_n"_a
     );
     m.def(
-        "eigen_sp_matmul_topn",
-        &api::sp_matmul_topn<int, int64_t>,
+        "eigen_sp_matmul_topn_scalar",
+        &api::sp_matmul_topn_scalar<int, int64_t>,
         "A"_a.noconvert(),
         "B"_a.noconvert(),
         "top_n"_a
     );
-}  // bind_sp_matmul_loop
+}  // bind_sp_matmul_scalar
 
 }  // namespace sdtn::eigen::bindings
