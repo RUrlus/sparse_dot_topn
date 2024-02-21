@@ -290,8 +290,9 @@ inline std::tuple<size_t, eT*, idxT*, idxT*> sp_matmul_topn_mt(
     const idxT* __restrict B_indptr,
     const idxT* __restrict B_indices
 ) {
-    auto values = std::unique_ptr<eT[]>(new eT[nrows * top_n]);
-    auto indices = std::unique_ptr<idxT[]>(new idxT[nrows * top_n]);
+    const idxT result_size = static_cast<idxT>(top_n * nrows);
+    auto values = std::unique_ptr<eT[]>(new eT[result_size]);
+    auto indices = std::unique_ptr<idxT[]>(new idxT[result_size]);
     auto row_nset = std::unique_ptr<idxT[]>(new idxT[nrows]);
 #pragma omp parallel num_threads(n_threads) \
     shared(top_n,                           \
