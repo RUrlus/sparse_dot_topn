@@ -39,6 +39,14 @@ SpMat<eT, idxT> sp_matmul(nb::handle& A_src, nb::handle& B_src) {
     return A * B;
 }
 
+template <typename eT, typename idxT>
+SpMat<eT, idxT> sp_sym_matmul(nb::handle& A_src) {
+    SpMapMat<eT, idxT> A = to_eigen<eT, idxT>(A_src);
+    Eigen::SparseMatrix<eT, Eigen::RowMajor, idxT> C;
+    C.TriangularView(Eigen::Upper) = A * A.transpose();
+    return C;
+}  // sp_sym_matmul_topn
+
 }  // namespace api
 
 namespace bindings {
