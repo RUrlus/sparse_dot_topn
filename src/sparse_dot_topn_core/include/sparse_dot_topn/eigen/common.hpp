@@ -27,13 +27,13 @@ namespace sdtn::eigen {
 namespace nb = nanobind;
 
 template <typename eT, typename idxT>
-using SpMat = Eigen::SparseMatrix<eT, Eigen::RowMajor>;
+using SpMat = Eigen::SparseMatrix<eT, Eigen::RowMajor, idxT>;
 
 template <typename eT, typename idxT, int Order = Eigen::RowMajor>
 using SpMapMat = Eigen::MappedSparseMatrix<eT, Order, idxT>;
 
 template <typename eT, typename idxT>
-using SpColMat = Eigen::SparseMatrix<eT, Eigen::ColMajor>;
+using SpColMat = Eigen::SparseMatrix<eT, Eigen::ColMajor, idxT>;
 
 template <typename eT, typename idxT>
 using SpColMapMat = Eigen::MappedSparseMatrix<eT, Eigen::ColMajor, idxT>;
